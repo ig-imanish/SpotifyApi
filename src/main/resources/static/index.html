@@ -57,7 +57,7 @@
   <script>
     async function fetchCurrentlyPlaying() {
       try {
-        const response = await fetch('http://127.0.0.1:8080/currently-playing');
+        const response = await fetch('https://spotifyapi-8p76.onrender.com/currently-playing');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
