@@ -20,7 +20,7 @@ public class SpotifyService {
         this.spotifyApi = spotifyAuthService.getSpotifyApi();
     }
 
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedDelay = 44 * 60 * 1000)
     public void refreshAccessToken() throws ParseException {
         try {
             if (spotifyApi.getRefreshToken() == null) {
