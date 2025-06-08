@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Currently Playing Track</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #121212;
+      color: #eee;
+    }
+    #track-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    #album-art {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #1db954;
+    }
+    a {
+      color: #1db954;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    #message {
+      margin-top: 2rem;
+      font-style: italic;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Currently Playing on Spotify</h1>
+  <div id="track-info">
+    <!-- Album art -->
+    <img id="album-art" src="" alt="Album Art" />
+    <div>
+      <h2 id="track-name"></h2>
+      <p><strong>Artists:</strong> <span id="artists"></span></p>
+      <p><strong>Album:</strong> <a id="album-link" href="" target="_blank" rel="noopener noreferrer"></a></p>
+      <p><strong>Device:</strong> <span id="device-name"></span></p>
+      <p><strong>Is Playing:</strong> <span id="is-playing"></span></p>
+      <p><strong>Progress:</strong> <span id="progress"></span> / <span id="duration"></span></p>
+    </div>
+  </div>
+  <div id="message"></div>
+
+  <script>
+    async function fetchCurrentlyPlaying() {
+      try {
+        const response = await fetch('http://127.0.0.1:8080/currently-playing');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+
+        // If no track is playing
+        if (!data || !data.item) {
+          document.getElementById('message').textContent = 'No track is currently playing.';
+          return;
+        }
+
+        // Set album art (use the first image)
+        const albumArt = data.item.album.images[0]?.url || '';
+        document.getElementById('album-art').src = albumArt;
+        document.getElementById('album-art').alt = data.item.album.name;
+
+        // Track name
+        document.getElementById('track-name').textContent = data.item.name || 'Unknown Track';
+
+        // Artists (comma separated, clickable links)
+        const artists = data.item.artists.map(artist => {
+          const url = artist.externalUrls.externalUrls.spotify || '#';
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${artist.name}</a>`;
+        }).join(', ');
+        document.getElementById('artists').innerHTML = artists;
+
+        // Album name with link
+        const albumUrl = data.item.album.externalUrls.externalUrls.spotify || '#';
+        const albumLink = document.getElementById('album-link');
+        albumLink.textContent = data.item.album.name || 'Unknown Album';
+        albumLink.href = albumUrl;
+
+        // Device name
+        document.getElementById('device-name').textContent = data.device.name || 'Unknown Device';
+
+        // Is playing
+        document.getElementById('is-playing').textContent = data.is_playing ? 'Yes' : 'No';
+
+        // Progress and duration in mm:ss format
+        function msToMinutesSeconds(ms) {
+          const minutes = Math.floor(ms / 60000);
+          const seconds = Math.floor((ms % 60000) / 1000);
+          return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        document.getElementById('progress').textContent = msToMinutesSeconds(data.progress_ms || 0);
+        document.getElementById('duration').textContent = msToMinutesSeconds(data.item.durationMs || 0);
+
+        // Clear any message
+        document.getElementById('message').textContent = '';
+
+      } catch (error) {
+        document.getElementById('message').textContent = 'Error fetching currently playing track.';
+        console.error('Error fetching currently playing:', error);
+      }
+    }
+
+    // Fetch once on load
+    fetchCurrentlyPlaying();
+
+    // Optional: refresh every 15 seconds
+    setInterval(fetchCurrentlyPlaying, 15000);
+  </script>
+</body>
+</html>
